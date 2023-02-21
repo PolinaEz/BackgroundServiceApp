@@ -6,7 +6,6 @@
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                Console.WriteLine("Hello");
                 await Task.Delay(500);
             }
         }
