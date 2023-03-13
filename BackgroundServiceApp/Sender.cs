@@ -7,11 +7,10 @@ namespace BackgroundServiceApp
     public class Sender : BackgroundService
     {
         private readonly UdpClient udpClient;
-        const int port = 22220;
 
-        public Sender(UdpClient udpClient)
+        public Sender()
         {
-            this.udpClient = udpClient;
+            this.udpClient = new UdpClient("127.0.0.1", 22220);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -20,9 +19,7 @@ namespace BackgroundServiceApp
             {
                 string message = DateTimeOffset.Now.ToString();
                 byte[] data = Encoding.UTF8.GetBytes(message);
-                IPEndPoint remotePoint = new(IPAddress.Parse("127.0.0.1"), port);
-                int bytes = await udpClient.SendAsync(data, remotePoint, stoppingToken);
-                Console.WriteLine($"Отправлено {bytes} байт");
+                await udpClient.SendAsync(data, stoppingToken);
                 await Task.Delay(2000, stoppingToken);
             }
         }
