@@ -1,6 +1,6 @@
 ﻿namespace BackgroundServiceApp
 {
-    public class Lbs
+    public struct Lbs
     {
         public int Mnc { get; set; }
 

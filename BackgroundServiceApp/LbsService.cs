@@ -8,7 +8,7 @@ namespace BackgroundServiceApp
         //private readonly List<Lbs> lbsList = new();
         private readonly string path = "257.csv";
         private readonly char separator = ',';
-        private readonly Dictionary<(double, double), Lbs> lbsDictionary = new();
+        private readonly Dictionary<Lbs, (double, double)> lbsDictionary = new();
 
         public LbsService() 
         {
@@ -84,15 +84,17 @@ namespace BackgroundServiceApp
                 //    CellId = cellId
                 //});
 
-                if (!lbsDictionary.ContainsKey((lon, lat)))
+                var resultLbs = new Lbs
                 {
-                    lbsDictionary.Add((lon, lat), new Lbs
-                    {
-                        Mcc = mcc,
-                        Mnc = mnc,
-                        Lac = lac,
-                        CellId = cellId
-                    });
+                    Mcc = mcc,
+                    Mnc = mnc,
+                    Lac = lac,
+                    CellId = cellId
+                };
+
+                if (!lbsDictionary.ContainsKey(resultLbs))
+                {
+                    lbsDictionary.Add(resultLbs, (lon, lat));
                 }
             }
         }
@@ -104,24 +106,17 @@ namespace BackgroundServiceApp
 
         public bool TryGetLatLng(Lbs lbs, out double lat, out double lng)
         {
-            if (lbsDictionary.ContainsValue(lbs))
-            {
-                var q = lbsDictionary.FirstOrDefault(x => x.Value == lbs).Key;
-                lat = q.Item1;
-                lng = q.Item2;
-                return true;
-            }
-
-            lat = 0;
-            lng = 0;
-            return false;
+            var result = lbsDictionary.TryGetValue(lbs, out (double, double) coordinates);
+            (lat, lng) = coordinates;
+            return result;
         }
 
         public Lbs FindLbs(double lat, double lng)
         {
-            if (lbsDictionary.ContainsKey((lat, lng)))
+            if (lbsDictionary.ContainsValue((lat, lng)))
             {
-                return lbsDictionary[(lat, lng)];
+
+                return lbsDictionary.FirstOrDefault(x => x.Value == (lat, lng)).Key;
             }
 
             return new Lbs();
