@@ -113,10 +113,10 @@ namespace BackgroundServiceApp
 
         public Lbs FindLbs(double lat, double lng)
         {
-            if (lbsDictionary.ContainsValue((lat, lng)))
+            if (lbsDictionary.ContainsValue((lng, lat)))
             {
 
-                return lbsDictionary.FirstOrDefault(x => x.Value == (lat, lng)).Key;
+                return lbsDictionary.FirstOrDefault(x => x.Value == (lng, lat)).Key;
             }
 
             return new Lbs();

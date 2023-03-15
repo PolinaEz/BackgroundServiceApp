@@ -27,7 +27,8 @@ namespace BackgroundServiceApp
                 }, out double lat, out double lng);
                 var lbs = lbsService.FindLbs(lat, lng);
 
-                var point = new Point().Parse("20.07.2015 11:43:33,29.478378,54.703674,3,257,2,84,55722");
+                var point = new Point().Parse("20.07.2015 11:43:33,29.478378,54.703674,3,0,0,0,0");
+                point.Lbs = lbsService.FindLbs(point.Lat, point.Long);
                 Console.WriteLine(point.ToString());
 
                 var result = await udpClient.ReceiveAsync(stoppingToken);
