@@ -113,13 +113,33 @@ namespace BackgroundServiceApp
 
         public Lbs FindLbs(double lat, double lng)
         {
-            if (lbsDictionary.ContainsValue((lng, lat)))
-            {
+            //if (lbsDictionary.ContainsValue((lng, lat)))
+            //{
 
-                return lbsDictionary.FirstOrDefault(x => x.Value == (lng, lat)).Key;
+            //    return lbsDictionary.FirstOrDefault(x => x.Value == (lng, lat)).Key;
+            //}
+
+            double min = double.MaxValue;
+            double range;
+            Lbs result = default;
+
+            foreach (var lbs in lbsDictionary)
+            {
+                range = Сomparison(lbs.Value, (lng, lat));
+
+                if (range < min)
+                {
+                    result = lbs.Key;
+                    min = range;
+                }
             }
 
-            return new Lbs();
+            return result;
+        }
+
+        private double Сomparison((double lng, double lat) point1, (double lng, double lat) point2)
+        {
+            return Math.Sqrt(Math.Pow((point1.lat - point2.lat), 2) + Math.Pow((point1.lng - point2.lng), 2));       
         }
     }
 }
