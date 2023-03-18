@@ -137,7 +137,7 @@ namespace BackgroundServiceApp
             return result;
         }
 
-        private double Сomparison((double lng, double lat) point1, (double lng, double lat) point2)
+        private static double Сomparison((double lng, double lat) point1, (double lng, double lat) point2)
         {
             return Math.Sqrt(Math.Pow((point1.lat - point2.lat), 2) + Math.Pow((point1.lng - point2.lng), 2));       
         }

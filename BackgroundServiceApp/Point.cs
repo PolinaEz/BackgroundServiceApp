@@ -6,8 +6,6 @@ namespace BackgroundServiceApp
 {
     public class Point
     {
-        private readonly char separator = ',';
-
         public DateTime Time { get; set; }
 
         public double Long { get; set; }
@@ -35,6 +33,8 @@ namespace BackgroundServiceApp
 
         public Point Parse(string inputData)
         {
+            char separator = ',';
+
             var lineSpan = inputData.AsSpan();
 
             var index = inputData.IndexOf(separator);
@@ -87,11 +87,11 @@ namespace BackgroundServiceApp
             };
 
             return this;
-        }
 
-        private int NextIndex(int index, string line)
-        {
-            return line.IndexOf(separator, index + 1);
+            int NextIndex(int index, string line)
+            {
+                return line.IndexOf(separator, index + 1);
+            }
         }
     }
 }
