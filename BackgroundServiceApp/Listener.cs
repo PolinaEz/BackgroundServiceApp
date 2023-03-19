@@ -20,13 +20,13 @@ namespace BackgroundServiceApp
             {
                 var result = await udpClient.ReceiveAsync(stoppingToken);
                 var message = Encoding.UTF8.GetString(result.Buffer);
-
-                points.Add(new Point().Parse(message));
-                if (points[^1].Sat < 3)
-                {
-                    points[^1].Lbs = lbsService.FindLbs(points[^1].Lat, points[^1].Long);
-                }
                 Console.WriteLine(points[^1].ToString());
+                points.Add(new Point().Parse(message));
+                //if (points[^1].Sat < 3)
+                //{
+                //    points[^1].Lbs = lbsService.FindLbs(points[^1].Lat, points[^1].Long);
+                //}
+                //Console.WriteLine(points[^1].ToString());
                 await Task.Delay(2000, stoppingToken);
             }
         }
