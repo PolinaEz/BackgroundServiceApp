@@ -20,79 +20,118 @@ namespace BackgroundServiceApp
             while ((line = reader.ReadLine()) != null)
             {
                 var lineSpan = line.AsSpan();
-
-                if (!(lineSpan[0] == 'G' && lineSpan[1] == 'S' && lineSpan[2] == 'M'))
-                    continue;
-
                 var index = line.IndexOf(separator);
-                if (index == -1)
-                    continue;
+                int nextIndex;
 
-                var nextIndex = NextIndex(index, line);
-                if (nextIndex == -1)
-                    continue;
-
-                ushort.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out ushort mcc);
-
-                index = nextIndex;
-                nextIndex = NextIndex(index, line);
-                if (nextIndex == -1)
-                    continue;
-
-                byte.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out byte mnc);
-
-
-                index = nextIndex;
-                nextIndex = NextIndex(index, line);
-                if (nextIndex == -1)
-                    continue;
-
-                ushort.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out ushort lac);
-
-                index = nextIndex;
-                nextIndex = NextIndex(index, line);
-                if (nextIndex == -1)
-                    continue;
-
-                int.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out int cellId);
-
-                index = nextIndex;
-                nextIndex = NextIndex(index, line);
-                if (nextIndex == -1)
-                    return;
-
-                index = nextIndex;
-                nextIndex = NextIndex(index, line);
-                if (nextIndex == -1)
-                    return;
-
-                double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double lon);
-
-                index = nextIndex;
-                nextIndex = NextIndex(index, line);
-                if (nextIndex == -1)
-                    return;
-
-                double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double lat);
-
-                var lbs = new Lbs
+                if (
+                    lineSpan[0] == 'G' &&
+                    lineSpan[1] == 'S' &&
+                    lineSpan[2] == 'M' &&
+                    TryParseInt(index, nextIndex = NextIndex(index, line), lineSpan, out int mcc) &&
+                    TryParseInt(index = NextIndex(nextIndex, line), nextIndex = NextIndex(index, line), lineSpan, out int mnc) &&
+                    TryParseInt(index = NextIndex(nextIndex,line), nextIndex = NextIndex(index, line), lineSpan, out int lac) &&
+                    TryParseInt(index = NextIndex(nextIndex, line), nextIndex = NextIndex(index, line), lineSpan, out int cellId) &&
+                    TrySkip(nextIndex, out index, line) &&
+                    TryParseDouble(index = NextIndex(index, line), nextIndex = NextIndex(index, line), lineSpan, out double lon) &&
+                    TryParseDouble(index = NextIndex(index, line), nextIndex = NextIndex(index, line), lineSpan, out double lat)
+                    )
                 {
-                    Mcc = mcc,
-                    Mnc = mnc,
-                    Lac = lac,
-                    CellId = cellId
-                };
-
-                lbsDictionary.Add(lbs,
-                    new StationInfo
+                    var lbs = new Lbs
                     {
-                        Lbs = lbs,
-                        Coordinates = new Сoordinates()
+                        Mcc = mcc,
+                        Mnc = mnc,
+                        Lac = lac,
+                        CellId = cellId
+                    };
+
+                    lbsDictionary.Add(
+                        lbs,
+                        new StationInfo
                         {
-                            Lat = lat,
-                            Lon = lon
-                        }
-                    });
+                            Lbs = lbs,
+                            Coordinates = new Сoordinates()
+                            {
+                                Lat = lat,
+                                Lon = lon
+                            }
+                        });
+                }
+                else
+                    continue;
+
+                //if (!(lineSpan[0] == 'G' && lineSpan[1] == 'S' && lineSpan[2] == 'M'))
+                //    continue;
+
+                //var index = line.IndexOf(separator);
+                //if (index == -1)
+                //    continue;
+
+                //var nextIndex = NextIndex(index, line);
+                //if (nextIndex == -1)
+                //    continue;
+
+                //ushort.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out ushort mcc);
+
+                //index = nextIndex;
+                //nextIndex = NextIndex(index, line);
+                //if (nextIndex == -1)
+                //    continue;
+
+                //byte.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out byte mnc);
+
+
+                //index = nextIndex;
+                //nextIndex = NextIndex(index, line);
+                //if (nextIndex == -1)
+                //    continue;
+
+                //ushort.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out ushort lac);
+
+                //index = nextIndex;
+                //nextIndex = NextIndex(index, line);
+                //if (nextIndex == -1)
+                //    continue;
+
+                //int.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out int cellId);
+
+                //index = nextIndex;
+                //nextIndex = NextIndex(index, line);
+                //if (nextIndex == -1)
+                //    return;
+
+                //index = nextIndex;
+                //nextIndex = NextIndex(index, line);
+                //if (nextIndex == -1)
+                //    return;
+
+                //double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double lon);
+
+                //index = nextIndex;
+                //nextIndex = NextIndex(index, line);
+                //if (nextIndex == -1)
+                //    return;
+
+                //double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double lat);
+
+                //var lbs = new Lbs
+                //{
+                //    Mcc = mcc,
+                //    Mnc = mnc,
+                //    Lac = lac,
+                //    CellId = cellId
+                //};
+
+                //lbsDictionary.Add(
+                //    lbs,
+                //    new StationInfo
+                //    {
+                //        Lbs = lbs,
+                //        Coordinates = new Сoordinates()
+                //        {
+                //            Lat = lat,
+                //            Lon = lon
+                //        }
+                //    });
             }
 
 
@@ -100,31 +139,38 @@ namespace BackgroundServiceApp
             {
                 return line.IndexOf(separator, index + 1);
             }
-            int TryParseInt(int index, int nextIndex, out int result)
+            bool TryParseInt(int index, int nextIndex, ReadOnlySpan<char> lineSpan, out int result)
             {
-                int.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out int result);
+                return int.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out result);
             }
-            int TryParseDouble(int index, int nextIndex, Span lineSpan, out double result)
+            bool TryParseDouble(int index, int nextIndex, ReadOnlySpan<char> lineSpan, out double result)
             {
-                double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+                 return double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+            }
+            bool TrySkip(int index, out int resultIndex, string line)
+            {
+                resultIndex = line.IndexOf(separator, index + 1);
+                if (resultIndex < 0) return false;
+                else return true;
             }
         }
 
         public bool TryGetStationInfo(Lbs lbs, out StationInfo stationInfo) => lbsDictionary.TryGetValue(lbs, out stationInfo);
 
-        public Lbs FindLbs(Coordinates coordinates)
+        public Lbs FindLbs(Сoordinates coordinates)
         {
             double min = double.MaxValue;
             double range;
             Lbs result = default;
 
-            foreach (var lbs in lbsDictionary)
+            foreach (var stationInfo in lbsDictionary)
             {
-                range = Math.Pow((), 2) + Math.Pow((), 2);
+                range = Math.Pow((stationInfo.Value.Coordinates.Lon - coordinates.Lon), 2) + 
+                        Math.Pow((stationInfo.Value.Coordinates.Lat - coordinates.Lat), 2);
 
                 if (range < min)
                 {
-                    result = lbs;
+                    result = stationInfo.Key;
                     min = range;
                 }
             }
