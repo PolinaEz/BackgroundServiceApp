@@ -1,4 +1,6 @@
-﻿using System.Globalization;
+﻿using System;
+using System.Collections.Specialized;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -8,9 +10,7 @@ namespace BackgroundServiceApp
     {
         public DateTime Time { get; set; }
 
-        public double Long { get; set; }
-
-        public double Lat { get; set; }
+        public Coordinates Сoordinates { get; set; }
 
         public int Sat { get; set; }
 
@@ -20,8 +20,8 @@ namespace BackgroundServiceApp
         {
             StringBuilder stringBuilder = new();
             stringBuilder.Append(Time.ToString()).Append(',')
-                .Append(Long.ToString(CultureInfo.InvariantCulture)).Append(',')
-                .Append(Lat.ToString(CultureInfo.InvariantCulture)).Append(',')
+                .Append(Сoordinates.Lon.ToString(CultureInfo.InvariantCulture)).Append(',')
+                .Append(Сoordinates.Lat.ToString(CultureInfo.InvariantCulture)).Append(',')
                 .Append(Sat).Append(',')
                 .Append(Lbs.Mcc).Append(',')
                 .Append(Lbs.Mnc).Append(',')
@@ -31,66 +31,80 @@ namespace BackgroundServiceApp
             return stringBuilder.ToString();
         }
 
-        public Point Parse(string inputData)
+        public Point? Parse(string inputData)
         {
             char separator = ',';
+            int index = 0;
+            int nextIndex = inputData.IndexOf(separator, index + 1);
+            CultureInfo cultureInfo = new CultureInfo("de-DE");
 
-            var lineSpan = inputData.AsSpan();
-
-            var index = inputData.IndexOf(separator);
-            var nextIndex = NextIndex(index, inputData);
-
-            DateTime.TryParse(lineSpan[..(index - 1)], out DateTime dateTime);
-
-            double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double lon);
-
-            index = nextIndex;
-            nextIndex = NextIndex(index, inputData);
-
-            double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double lat);
-
-            index = nextIndex;
-            nextIndex = NextIndex(index, inputData);
-
-            int.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out int sat);
-
-            index = nextIndex;
-            nextIndex = NextIndex(index, inputData);
-
-            ushort.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out ushort mcc);
-
-            index = nextIndex;
-            nextIndex = NextIndex(index, inputData);
-
-            byte.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out byte mnc);
-
-            index = nextIndex;
-            nextIndex = NextIndex(index, inputData);
-
-            ushort.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), out ushort lac);
-
-            index = nextIndex;
-            nextIndex = NextIndex(index, inputData);
-
-            int.TryParse(lineSpan[(index + 1)..], out int cellId);
-
-            this.Time = dateTime;
-            this.Lat = lat;
-            this.Long = lon;
-            this.Sat = sat;
-            this.Lbs = new Lbs
+            if (
+                    TryParseDateTime(ref index, ref nextIndex, inputData, cultureInfo, out DateTime time) &&
+                    TryParseDouble(ref index, ref nextIndex, inputData, out double lon) &&
+                    TryParseDouble(ref index, ref nextIndex, inputData, out double lat) &&
+                    TryParseInt(ref index, ref nextIndex, inputData, out int sat) &&
+                    TryParseInt(ref index, ref nextIndex, inputData, out int mcc) &&
+                    TryParseInt(ref index, ref nextIndex, inputData, out int mnc) &&
+                    TryParseInt(ref index, ref nextIndex, inputData, out int lac) &&
+                    TryParseInt(ref index, ref nextIndex, inputData, out int cellId)
+                )
             {
-                Mcc = mcc,
-                Mnc = mnc,
-                Lac = lac,
-                CellId = cellId
-            };
+                this.Time = time;
+                this.Сoordinates = new Coordinates { Lat = lat, Lon = lon };
+                this.Sat = sat;
+                this.Lbs = new Lbs
+                {
+                    Mcc = mcc,
+                    Mnc = mnc,
+                    Lac = lac,
+                    CellId = cellId
+                };
 
-            return this;
+                return this;
+            }
+            else
+                return default;
 
-            int NextIndex(int index, string line)
+
+            void NextIndex(ref int index, string line)
             {
-                return line.IndexOf(separator, index + 1);
+                index = line.IndexOf(separator, index + 1);
+            }
+
+            bool TryParseInt(ref int index, ref int nextIndex, string line, out int result)
+            {
+                if (nextIndex == -1)
+                {
+                    nextIndex = line.Length;
+                }
+
+                var resultBool = int.TryParse(line.AsSpan().Slice(index + 1, nextIndex - index - 1), out result);
+
+                NextIndex(ref index, line);
+
+                if (index == -1)
+                {
+                    return resultBool;
+                }
+
+                NextIndex(ref nextIndex, line);
+                return resultBool;
+            }
+
+            bool TryParseDouble(ref int index, ref int nextIndex, string line, out double result)
+            {
+                var resultBool = double.TryParse(line.AsSpan().Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out result);
+                NextIndex(ref index, line);
+                NextIndex(ref nextIndex, line);
+                return resultBool;
+            }
+
+            bool TryParseDateTime(ref int index, ref int nextIndex, string line, CultureInfo cultureInfo, out DateTime result)
+            {
+                var resultBool = DateTime.TryParse(line.AsSpan().Slice(index, nextIndex - index), out result);
+                NextIndex(ref index, line);
+                NextIndex(ref nextIndex, line);
+                return resultBool;
             }
         }
     }

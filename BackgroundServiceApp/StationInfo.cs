@@ -1,8 +1,8 @@
 ﻿namespace BackgroundServiceApp
 {
-    public class StationInfo
+    public struct StationInfo
     {
         public Lbs Lbs { get; set; }
-        public Сoordinates Coordinates { get; set; }
+        public Coordinates Coordinates { get; set; }
     }
 }

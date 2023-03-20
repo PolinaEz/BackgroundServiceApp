@@ -15,8 +15,8 @@ namespace BackgroundServiceApp
     public class Sender : BackgroundService
     {
         private int iterationNumber = 0;
-        private LbsService _lbsService;
-        private List<Point> points = new();
+        private readonly LbsService _lbsService;
+        private readonly List<Point> points = new();
 
         public Sender(LbsService lbsService)
         {
@@ -25,8 +25,7 @@ namespace BackgroundServiceApp
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var pointsGpx = Drivers.Gpx.OpenLayer(@"GraphHopper-Track-2023-03-16-20km.gpx");
-
+            var pointsGpx = Drivers.Gpx.OpenLayer(@"GraphHopper-Track-2023-03-16-3km.gpx");
             foreach (var pointGpx in pointsGpx)
             {
                 if (pointGpx.Geometry.GeometryType == GeometryType.MultiLineString)
@@ -40,18 +39,33 @@ namespace BackgroundServiceApp
 
             while (!stoppingToken.IsCancellationRequested)
             {
-                if (iterationNumber < points.Count)
+                await Task.Delay(1000, stoppingToken);
+                Console.WriteLine("/////////////////////////////\n Invalid data \n /////////////////////////////\n");
+
+                for (int i = 0; i < points.Count; i++)
                 {
-                    points[iterationNumber].Time = DateTime.Now.AddSeconds(iterationNumber);
-                    string message = points[iterationNumber].ToString();
-                    Console.WriteLine(message);
+                    points[i].Time = DateTime.Now.AddSeconds(i);
+                    string message = points[i].ToString();
+                    Console.WriteLine($"Send: {message}");
 
                     byte[] data = Encoding.UTF8.GetBytes(message);
                     await udpClient.SendAsync(data, stoppingToken);
-                    iterationNumber++;
+                    await Task.Delay(1000, stoppingToken);
                 }
 
-                await Task.Delay(1000, stoppingToken);
+                Console.WriteLine("/////////////////////////////\n Valid data \n /////////////////////////////\n");
+
+                for (int i = 0; i < points.Count; i++)
+                {
+                    points[i].Time = DateTime.Now.AddSeconds(i);
+                    points[i].Sat = 4;
+                    string message = points[i].ToString();
+                    Console.WriteLine($"Send: {message}");
+
+                    byte[] data = Encoding.UTF8.GetBytes(message);
+                    await udpClient.SendAsync(data, stoppingToken);
+                    await Task.Delay(1000, stoppingToken);
+                }
             }
         }
 
@@ -64,32 +78,31 @@ namespace BackgroundServiceApp
                 return;
 
             int indexOfComma = indexOfParenthesis;
-            int indexOfSpace;
+            int indexOfSpace; 
 
             do
             {
-                indexOfSpace = NextIndex(indexOfComma + 1, line, ' ');
-                if (indexOfSpace == -1)
-                    continue;
-
-                double.TryParse(lineSpan.Slice(indexOfComma + 1, indexOfSpace - indexOfComma - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double lon);
-
-                int nextIndexOfSpace = NextIndex(indexOfSpace, line, ' ');
-                if (nextIndexOfSpace == -1)
-                    continue;
-
-                double.TryParse(lineSpan.Slice(indexOfSpace + 1, nextIndexOfSpace - indexOfSpace - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out double lat);
-
-                points.Add(new Point
+                if (
+                    TryParseDouble(indexOfComma, indexOfSpace = NextIndex(indexOfComma + 1, line, ' '), lineSpan, out double lon) &&
+                    TryParseDouble(indexOfSpace, NextIndex(indexOfSpace, line, ' '), lineSpan, out double lat)
+                    )
                 {
-                    Lat = lat,
-                    Long = lon
-                });
+                    Lbs lbs = _lbsService.FindLbs(new Coordinates() { Lat = lat, Lon = lon });
+                    points.Add(new Point
+                    {
+                        Сoordinates = new Coordinates() { Lat = lat, Lon = lon},
+                        Lbs = lbs
+                    });
+                }
             } while ((indexOfComma = NextIndex(indexOfComma, line, ',')) != -1);
 
             static int NextIndex(int index, string line, char separator)
             {
                 return line.IndexOf(separator, index + 1);
+            }
+            static bool TryParseDouble(int index, int nextIndex, ReadOnlySpan<char> lineSpan, out double result)
+            {
+                return double.TryParse(lineSpan.Slice(index + 1, nextIndex - index - 1), NumberStyles.Float, CultureInfo.InvariantCulture, out result);
             }
         }
     }

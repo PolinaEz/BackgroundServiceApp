@@ -1,6 +1,6 @@
 ﻿namespace BackgroundServiceApp
 {
-    public struct Сoordinates
+    public struct Coordinates
     {
         public double Lat { get; set; }
         public double Lon { get; set; }
