@@ -1,5 +1,6 @@
 ﻿using Aspose.Gis;
 using Aspose.Gis.Geometries;
+using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.Net.Sockets;
 using System.Text;
@@ -10,10 +11,12 @@ namespace BackgroundServiceApp
     {
         private readonly LbsService _lbsService;
         private readonly List<Point> _points = new();
+        private readonly SenderOptions _senderOptions;
 
-        public Sender(LbsService lbsService)
+        public Sender(LbsService lbsService, IOptions<SenderOptions> config)
         {
             this._lbsService = lbsService;
+            _senderOptions = config.Value;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -28,9 +31,9 @@ namespace BackgroundServiceApp
                 }
             }
 
-            using var udpClient = new UdpClient("127.0.0.1", 22220);
+            using var udpClient = new UdpClient(_senderOptions.Host, _senderOptions.Port);
 
-            var isInvalid = false;
+            var isInvalid = true;
 
             while (!stoppingToken.IsCancellationRequested)
             {
