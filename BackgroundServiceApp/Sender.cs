@@ -1,22 +1,15 @@
 ﻿using Aspose.Gis;
 using Aspose.Gis.Geometries;
-using System;
-using System.Drawing;
 using System.Globalization;
-using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
-using System.Reflection.Emit;
-using System.Reflection.PortableExecutable;
 using System.Text;
 
 namespace BackgroundServiceApp
 {
     public class Sender : BackgroundService
     {
-        private int iterationNumber = 0;
         private readonly LbsService _lbsService;
-        private readonly List<Point> points = new();
+        private readonly List<Point> _points = new();
 
         public Sender(LbsService lbsService)
         {
@@ -37,35 +30,26 @@ namespace BackgroundServiceApp
 
             using var udpClient = new UdpClient("127.0.0.1", 22220);
 
+            var isInvalid = false;
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 await Task.Delay(1000, stoppingToken);
-                Console.WriteLine("/////////////////////////////\n Invalid data \n /////////////////////////////\n");
+                Console.WriteLine($"/////////////////////////////\n {(isInvalid ? "Invalid" : "Valid")} data \n /////////////////////////////\n");
 
-                for (int i = 0; i < points.Count; i++)
+                foreach (var t in _points)
                 {
-                    points[i].Time = DateTime.Now.AddSeconds(i);
-                    string message = points[i].ToString();
-                    Console.WriteLine($"Send: {message}");
+                    t.Time = DateTime.Now;
+                    t.Sat = isInvalid ? 0 : 5;
+                    var message = t.ToString();
 
-                    byte[] data = Encoding.UTF8.GetBytes(message);
+                    var data = Encoding.UTF8.GetBytes(message);
                     await udpClient.SendAsync(data, stoppingToken);
+                    Console.WriteLine($"Send: {message}");
                     await Task.Delay(1000, stoppingToken);
                 }
 
-                Console.WriteLine("/////////////////////////////\n Valid data \n /////////////////////////////\n");
-
-                for (int i = 0; i < points.Count; i++)
-                {
-                    points[i].Time = DateTime.Now.AddSeconds(i);
-                    points[i].Sat = 4;
-                    string message = points[i].ToString();
-                    Console.WriteLine($"Send: {message}");
-
-                    byte[] data = Encoding.UTF8.GetBytes(message);
-                    await udpClient.SendAsync(data, stoppingToken);
-                    await Task.Delay(1000, stoppingToken);
-                }
+                isInvalid = false;
             }
         }
 
@@ -73,24 +57,24 @@ namespace BackgroundServiceApp
         {
             var lineSpan = line.AsSpan();
 
-            int indexOfParenthesis = line.LastIndexOf('(');
+            var indexOfParenthesis = line.LastIndexOf('(');
             if (indexOfParenthesis == -1)
                 return;
 
-            int indexOfComma = indexOfParenthesis;
-            int indexOfSpace; 
+            var indexOfComma = indexOfParenthesis;
 
             do
             {
+                int indexOfSpace;
                 if (
-                    TryParseDouble(indexOfComma, indexOfSpace = NextIndex(indexOfComma + 1, line, ' '), lineSpan, out double lon) &&
-                    TryParseDouble(indexOfSpace, NextIndex(indexOfSpace, line, ' '), lineSpan, out double lat)
+                    TryParseDouble(indexOfComma, indexOfSpace = NextIndex(indexOfComma + 1, line, ' '), lineSpan, out var lon) &&
+                    TryParseDouble(indexOfSpace, NextIndex(indexOfSpace, line, ' '), lineSpan, out var lat)
                     )
                 {
-                    Lbs lbs = _lbsService.FindLbs(new Coordinates() { Lat = lat, Lon = lon });
-                    points.Add(new Point
+                    var lbs = _lbsService.FindLbs(new Coordinates() { Lat = lat, Lon = lon });
+                    _points.Add(new Point
                     {
-                        Сoordinates = new Coordinates() { Lat = lat, Lon = lon},
+                        Coordinates = new Coordinates() { Lat = lat, Lon = lon},
                         Lbs = lbs
                     });
                 }

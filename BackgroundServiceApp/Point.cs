@@ -9,19 +9,18 @@ namespace BackgroundServiceApp
     public class Point
     {
         public DateTime Time { get; set; }
-
-        public Coordinates Сoordinates { get; set; }
-
+        public Coordinates Coordinates { get; set; }
         public int Sat { get; set; }
-
         public Lbs Lbs { get; set; }
 
         public override string ToString()
         {
+            const string dateFormat = "dd-MM-yyyy HH:mm:ss";
+
             StringBuilder stringBuilder = new();
-            stringBuilder.Append(Time.ToString()).Append(',')
-                .Append(Сoordinates.Lon.ToString(CultureInfo.InvariantCulture)).Append(',')
-                .Append(Сoordinates.Lat.ToString(CultureInfo.InvariantCulture)).Append(',')
+            stringBuilder.Append(Time.ToString(dateFormat)).Append(',')
+                .Append(Coordinates.Lon.ToString(CultureInfo.InvariantCulture)).Append(',')
+                .Append(Coordinates.Lat.ToString(CultureInfo.InvariantCulture)).Append(',')
                 .Append(Sat).Append(',')
                 .Append(Lbs.Mcc).Append(',')
                 .Append(Lbs.Mnc).Append(',')
@@ -31,39 +30,44 @@ namespace BackgroundServiceApp
             return stringBuilder.ToString();
         }
 
-        public Point? Parse(string inputData)
+        public static bool TryParsePoint(string inputData, out Point? resultPoint)
         {
-            char separator = ',';
-            int index = 0;
-            int nextIndex = inputData.IndexOf(separator, index + 1);
-            CultureInfo cultureInfo = new CultureInfo("de-DE");
+            const char separator = ',';
+            const string dateFormat = "dd-MM-yyyy HH:mm:ss";
+
+            var index = 0;
+            var nextIndex = inputData.IndexOf(separator, index + 1);
 
             if (
-                    TryParseDateTime(ref index, ref nextIndex, inputData, cultureInfo, out DateTime time) &&
-                    TryParseDouble(ref index, ref nextIndex, inputData, out double lon) &&
-                    TryParseDouble(ref index, ref nextIndex, inputData, out double lat) &&
-                    TryParseInt(ref index, ref nextIndex, inputData, out int sat) &&
-                    TryParseInt(ref index, ref nextIndex, inputData, out int mcc) &&
-                    TryParseInt(ref index, ref nextIndex, inputData, out int mnc) &&
-                    TryParseInt(ref index, ref nextIndex, inputData, out int lac) &&
-                    TryParseInt(ref index, ref nextIndex, inputData, out int cellId)
-                )
+                TryParseDateTime(ref index, ref nextIndex, inputData, dateFormat, out var time) &&
+                TryParseDouble(ref index, ref nextIndex, inputData, out var lon) &&
+                TryParseDouble(ref index, ref nextIndex, inputData, out var lat) &&
+                TryParseInt(ref index, ref nextIndex, inputData, out var sat) &&
+                TryParseInt(ref index, ref nextIndex, inputData, out var mcc) &&
+                TryParseInt(ref index, ref nextIndex, inputData, out var mnc) &&
+                TryParseInt(ref index, ref nextIndex, inputData, out var lac) &&
+                TryParseInt(ref index, ref nextIndex, inputData, out var cellId)
+            )
             {
-                this.Time = time;
-                this.Сoordinates = new Coordinates { Lat = lat, Lon = lon };
-                this.Sat = sat;
-                this.Lbs = new Lbs
+                resultPoint = new Point
                 {
-                    Mcc = mcc,
-                    Mnc = mnc,
-                    Lac = lac,
-                    CellId = cellId
+                    Time = time,
+                    Coordinates = new Coordinates { Lat = lat, Lon = lon },
+                    Sat = sat,
+                    Lbs = new Lbs
+                    {
+                        Mcc = mcc,
+                        Mnc = mnc,
+                        Lac = lac,
+                        CellId = cellId
+                    }
                 };
 
-                return this;
+                return true;
             }
-            else
-                return default;
+
+            resultPoint = null;
+            return false;
 
 
             void NextIndex(ref int index, string line)
@@ -99,9 +103,12 @@ namespace BackgroundServiceApp
                 return resultBool;
             }
 
-            bool TryParseDateTime(ref int index, ref int nextIndex, string line, CultureInfo cultureInfo, out DateTime result)
+            bool TryParseDateTime(ref int index, ref int nextIndex, string line, string format, out DateTime result)
             {
-                var resultBool = DateTime.TryParse(line.AsSpan().Slice(index, nextIndex - index), out result);
+                var resultBool = DateTime.TryParseExact(line.AsSpan().Slice(index, nextIndex - index), format,
+                    CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AllowWhiteSpaces |
+                                                    System.Globalization.DateTimeStyles.AdjustToUniversal, out result);
+
                 NextIndex(ref index, line);
                 NextIndex(ref nextIndex, line);
                 return resultBool;

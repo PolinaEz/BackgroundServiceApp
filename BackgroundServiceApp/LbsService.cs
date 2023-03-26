@@ -5,35 +5,31 @@ namespace BackgroundServiceApp
 {
     public class LbsService
     {
-        private readonly Dictionary<Lbs, StationInfo> lbsDictionary = new();
-
-        public LbsService()
+        private readonly Lazy<Dictionary<Lbs, StationInfo>> _lbsDictionary = new(() =>
         {
-            string path = "257.csv";
+            const string path = "257.csv";
+            const char separator = ',';
 
-            using FileStream fileStream = File.OpenRead(path);
-            using var reader = new StreamReader(fileStream);
+            using var reader = File.OpenText(path);
+            Dictionary<Lbs, StationInfo> lbsDictionary = new();
 
-            char separator = ',';
-            string? line;
-
-            while ((line = reader.ReadLine()) != null)
+            while (reader.ReadLine() is { } line)
             {
-                int index = line.IndexOf(separator);
-                int nextIndex = line.IndexOf(separator, index + 1);
+                var index = line.IndexOf(separator);
+                var nextIndex = line.IndexOf(separator, index + 1);
 
-                if (
-                    line.AsSpan()[0] == 'G' &&
-                    line.AsSpan()[1] == 'S' &&
-                    line.AsSpan()[2] == 'M' &&
-                    TryParseInt(ref index, ref nextIndex, line, out int mcc) &&
-                    TryParseInt(ref index, ref nextIndex, line, out int mnc) &&
-                    TryParseInt(ref index, ref nextIndex, line, out int lac) &&
-                    TryParseInt(ref index, ref nextIndex, line, out int cellId) &&
-                    TrySkip(ref index, ref nextIndex, line) &&
-                    TryParseDouble(ref index, ref nextIndex, line, out double lon) &&
-                    TryParseDouble(ref index, ref nextIndex, line, out double lat)
-                    )
+                if (line.AsSpan()[0] != 'G' ||
+                    line.AsSpan()[1] != 'S' ||
+                    line.AsSpan()[2] != 'M' ||
+                    !TryParseInt(ref index, ref nextIndex, line, out int mcc) ||
+                    !TryParseInt(ref index, ref nextIndex, line, out int mnc) ||
+                    !TryParseInt(ref index, ref nextIndex, line, out int lac) ||
+                    !TryParseInt(ref index, ref nextIndex, line, out int cellId) ||
+                    !TrySkip(ref index, ref nextIndex, line) ||
+                    !TryParseDouble(ref index, ref nextIndex, line, out double lon) ||
+                    !TryParseDouble(ref index, ref nextIndex, line, out double lat))
+                    continue;
+                else
                 {
                     var lbs = new Lbs
                     {
@@ -43,22 +39,18 @@ namespace BackgroundServiceApp
                         CellId = cellId
                     };
 
-                    lbsDictionary.Add(
-                        lbs,
-                        new StationInfo
+                    lbsDictionary.Add( lbs, new StationInfo
                         {
-                            Lbs = lbs,
-                            Coordinates = new Coordinates()
+                            Lbs = lbs, Coordinates = new Coordinates()
                             {
                                 Lat = lat,
                                 Lon = lon
                             }
                         });
                 }
-                else
-                    continue;
             }
 
+            return lbsDictionary;
 
             void NextIndex(ref int index, string line)
             {
@@ -85,33 +77,29 @@ namespace BackgroundServiceApp
             {
                 NextIndex(ref index, line);
                 NextIndex(ref nextIndex, line);
-                if (index < 0 || nextIndex < 0) return false;
-                else return true;
+                return index >= 0 && nextIndex >= 0;
             }
-        }
+        });
 
         public bool TryGetStationInfo(Lbs lbs, out StationInfo stationInfo)
         {
-            var result = lbsDictionary.TryGetValue(lbs, out stationInfo);
+            var result = _lbsDictionary.Value.TryGetValue(lbs, out stationInfo);
             return result;
         }
 
         public Lbs FindLbs(Coordinates coordinates)
         {
-            double min = double.MaxValue;
-            double range;
+            var min = double.MaxValue;
             Lbs result = default;
 
-            foreach (var stationInfo in lbsDictionary)
+            foreach (var stationInfo in _lbsDictionary.Value)
             {
-                range = Math.Pow((stationInfo.Value.Coordinates.Lon - coordinates.Lon), 2) + 
-                        Math.Pow((stationInfo.Value.Coordinates.Lat - coordinates.Lat), 2);
+                var range = Math.Pow((stationInfo.Value.Coordinates.Lon - coordinates.Lon), 2) + 
+                            Math.Pow((stationInfo.Value.Coordinates.Lat - coordinates.Lat), 2);
 
-                if (range < min)
-                {
-                    result = stationInfo.Key;
-                    min = range;
-                }
+                if (!(range < min)) continue;
+                result = stationInfo.Key;
+                min = range;
             }
 
             return result;

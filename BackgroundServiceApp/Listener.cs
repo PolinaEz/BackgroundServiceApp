@@ -5,12 +5,11 @@ namespace BackgroundServiceApp
 {
     public class Listener : BackgroundService
     {
-        private readonly LbsService lbsService;
-        private readonly List<Point> points = new();
+        private readonly LbsService _lbsService;
 
         public Listener()
         {
-            this.lbsService = new LbsService();
+            this._lbsService = new LbsService();
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -21,21 +20,16 @@ namespace BackgroundServiceApp
                 var result = await udpClient.ReceiveAsync(stoppingToken);
                 var message = Encoding.UTF8.GetString(result.Buffer);
 
-                var point = new Point().Parse(message);
+                if (!Point.TryParsePoint(message, out var point)) continue;
 
-                if (point != null && point.Sat < 3)
+                if (point!.Sat >= 3)
                 {
-                    lbsService.TryGetStationInfo(point.Lbs, out StationInfo stationInfo);
-                    point.Сoordinates = stationInfo.Coordinates;
+                    _lbsService.TryGetStationInfo(point.Lbs, out var stationInfo);
+                    point.Coordinates = stationInfo.Coordinates;
                 }
 
                 Console.WriteLine($"Receive: {point}");
                 Console.WriteLine();
-
-                if (point != null)
-                {
-                    points.Add(point);
-                }               
             }
         }
     }
