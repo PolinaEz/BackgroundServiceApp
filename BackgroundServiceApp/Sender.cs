@@ -21,38 +21,46 @@ namespace BackgroundServiceApp
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var pointsGpx = Drivers.Gpx.OpenLayer(@"GraphHopper-Track-2023-03-16-3km.gpx");
-            foreach (var pointGpx in pointsGpx)
+            try
             {
-                if (pointGpx.Geometry.GeometryType == GeometryType.MultiLineString)
+                var pointsGpx = Drivers.Gpx.OpenLayer(@"GraphHopper-Track-2023-03-16-3km.gpx");
+                foreach (var pointGpx in pointsGpx)
                 {
-                    var lines = (MultiLineString)pointGpx.Geometry;
-                    ParseMultiLineString(lines.AsText());
+                    if (pointGpx.Geometry.GeometryType == GeometryType.MultiLineString)
+                    {
+                        var lines = (MultiLineString)pointGpx.Geometry;
+                        ParseMultiLineString(lines.AsText());
+                    }
+                }
+
+                using var udpClient = new UdpClient(_senderOptions.Host, _senderOptions.Port);
+
+                var isInvalid = true;
+
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    await Task.Delay(1000, stoppingToken);
+                    Console.WriteLine($"/////////////////////////////\n {(isInvalid ? "Invalid" : "Valid")} data \n /////////////////////////////\n");
+
+                    foreach (var t in _points)
+                    {
+                        t.Time = DateTime.Now;
+                        t.Sat = isInvalid ? 0 : 5;
+                        var message = t.ToString();
+
+                        var data = Encoding.UTF8.GetBytes(message);
+                        await udpClient.SendAsync(data, stoppingToken);
+                        Console.WriteLine($"Send: {message}");
+                        await Task.Delay(1000, stoppingToken);
+                    }
+
+                    isInvalid = false;
                 }
             }
-
-            using var udpClient = new UdpClient(_senderOptions.Host, _senderOptions.Port);
-
-            var isInvalid = true;
-
-            while (!stoppingToken.IsCancellationRequested)
+            catch (Exception e)
             {
-                await Task.Delay(1000, stoppingToken);
-                Console.WriteLine($"/////////////////////////////\n {(isInvalid ? "Invalid" : "Valid")} data \n /////////////////////////////\n");
-
-                foreach (var t in _points)
-                {
-                    t.Time = DateTime.Now;
-                    t.Sat = isInvalid ? 0 : 5;
-                    var message = t.ToString();
-
-                    var data = Encoding.UTF8.GetBytes(message);
-                    await udpClient.SendAsync(data, stoppingToken);
-                    Console.WriteLine($"Send: {message}");
-                    await Task.Delay(1000, stoppingToken);
-                }
-
-                isInvalid = false;
+                Console.WriteLine(e);
+                throw;
             }
         }
 
