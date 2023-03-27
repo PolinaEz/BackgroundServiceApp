@@ -10,7 +10,7 @@ namespace BackgroundServiceApp
     public class Sender : BackgroundService
     {
         private readonly LbsService _lbsService;
-        private readonly List<Point> _points = new();
+        private List<Point>? _points = new();
         private readonly SenderOptions _senderOptions;
 
         public Sender(LbsService lbsService, IOptions<SenderOptions> config)
@@ -26,11 +26,9 @@ namespace BackgroundServiceApp
                 var pointsGpx = Drivers.Gpx.OpenLayer(@"GraphHopper-Track-2023-03-16-3km.gpx");
                 foreach (var pointGpx in pointsGpx)
                 {
-                    if (pointGpx.Geometry.GeometryType == GeometryType.MultiLineString)
-                    {
-                        var lines = (MultiLineString)pointGpx.Geometry;
-                        ParseMultiLineString(lines.AsText());
-                    }
+                    if (pointGpx.Geometry.GeometryType != GeometryType.MultiLineString) continue;
+                    var lines = (MultiLineString)pointGpx.Geometry;
+                    _points = ParseMultiLineString(lines.AsText());
                 }
 
                 using var udpClient = new UdpClient(_senderOptions.Host, _senderOptions.Port);
@@ -54,7 +52,7 @@ namespace BackgroundServiceApp
                         await Task.Delay(1000, stoppingToken);
                     }
 
-                    isInvalid = false;
+                    isInvalid = !isInvalid;
                 }
             }
             catch (Exception e)
@@ -64,32 +62,34 @@ namespace BackgroundServiceApp
             }
         }
 
-        private void ParseMultiLineString(string line)
+        private List<Point>? ParseMultiLineString(string line)
         {
-            var lineSpan = line.AsSpan();
+            var points = new List<Point>();
 
+            var lineSpan = line.AsSpan();
             var indexOfParenthesis = line.LastIndexOf('(');
             if (indexOfParenthesis == -1)
-                return;
+                return null;
 
             var indexOfComma = indexOfParenthesis;
 
             do
             {
                 int indexOfSpace;
-                if (
-                    TryParseDouble(indexOfComma, indexOfSpace = NextIndex(indexOfComma + 1, line, ' '), lineSpan, out var lon) &&
-                    TryParseDouble(indexOfSpace, NextIndex(indexOfSpace, line, ' '), lineSpan, out var lat)
-                    )
+                if (!TryParseDouble(indexOfComma, indexOfSpace = NextIndex(indexOfComma + 1, line, ' '), lineSpan,
+                        out var lon) ||
+                    !TryParseDouble(indexOfSpace, NextIndex(indexOfSpace, line, ' '), lineSpan, out var lat)) continue;
+
+                var lbs = _lbsService.FindLbs(new Coordinates() { Lat = lat, Lon = lon });
+                points.Add(new Point
                 {
-                    var lbs = _lbsService.FindLbs(new Coordinates() { Lat = lat, Lon = lon });
-                    _points.Add(new Point
-                    {
-                        Coordinates = new Coordinates() { Lat = lat, Lon = lon},
-                        Lbs = lbs
-                    });
-                }
+                    Coordinates = new Coordinates() { Lat = lat, Lon = lon},
+                    Lbs = lbs
+                });
+
             } while ((indexOfComma = NextIndex(indexOfComma, line, ',')) != -1);
+
+            return points;
 
             static int NextIndex(int index, string line, char separator)
             {
