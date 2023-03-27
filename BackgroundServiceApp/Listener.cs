@@ -27,9 +27,11 @@ namespace BackgroundServiceApp
 
                     if (!Point.TryParsePoint(message, out var point)) continue;
 
-                    if (point!.Sat < 3)
+                    if (!point!.IsValid())
                     {
-                        _lbsService.TryGetStationInfo(point.Lbs, out var stationInfo);
+                        if (!_lbsService.TryGetStationInfo(point.Lbs, out var stationInfo))
+                            continue;
+
                         point.Coordinates = stationInfo.Coordinates;
                     }
 

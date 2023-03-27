@@ -5,6 +5,7 @@ namespace BackgroundServiceApp
 {
     public class LbsService
     {
+        private Dictionary<Lbs, StationInfo> Station => _lbsDictionary.Value;
         private readonly Lazy<Dictionary<Lbs, StationInfo>> _lbsDictionary = new(() =>
         {
             const string path = "257.csv";
@@ -81,24 +82,23 @@ namespace BackgroundServiceApp
             }
         });
 
-        public bool TryGetStationInfo(Lbs lbs, out StationInfo stationInfo)
-        {
-            var result = _lbsDictionary.Value.TryGetValue(lbs, out stationInfo);
-            return result;
-        }
+        public bool TryGetStationInfo(Lbs lbs, out StationInfo stationInfo) =>
+            Station.TryGetValue(lbs, out stationInfo);
 
         public Lbs FindLbs(Coordinates coordinates)
         {
             var min = double.MaxValue;
             Lbs result = default;
 
-            foreach (var stationInfo in _lbsDictionary.Value)
+            foreach (var stationInfo in Station.Values)
             {
-                var range = Math.Pow((stationInfo.Value.Coordinates.Lon - coordinates.Lon), 2) + 
-                            Math.Pow((stationInfo.Value.Coordinates.Lat - coordinates.Lat), 2);
+                var range = Math.Pow(stationInfo.Coordinates.Lon - coordinates.Lon, 2) + 
+                            Math.Pow(stationInfo.Coordinates.Lat - coordinates.Lat, 2);
+
 
                 if (!(range < min)) continue;
-                result = stationInfo.Key;
+
+                result = stationInfo.Lbs;
                 min = range;
             }
 

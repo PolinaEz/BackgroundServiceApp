@@ -30,6 +30,11 @@ namespace BackgroundServiceApp
             return stringBuilder.ToString();
         }
 
+        public bool IsValid()
+        {
+            return this.Sat >= 3;
+        } 
+
         public static bool TryParsePoint(string inputData, out Point? resultPoint)
         {
             const char separator = ',';
