@@ -10,12 +10,14 @@ namespace BackgroundServiceApp
     public class Sender : BackgroundService
     {
         private readonly LbsService _lbsService;
-        private List<Point>? _points = new();
+        private readonly ILogger<Sender> _logger;
         private readonly SenderOptions _senderOptions;
+        private List<Point>? _points = new();
 
-        public Sender(LbsService lbsService, IOptions<SenderOptions> config)
+        public Sender(LbsService lbsService, IOptions<SenderOptions> config, ILogger<Sender> _logger)
         {
             this._lbsService = lbsService;
+            this._logger = _logger;
             _senderOptions = config.Value;
         }
 
@@ -48,7 +50,7 @@ namespace BackgroundServiceApp
 
                         var data = Encoding.UTF8.GetBytes(message);
                         await udpClient.SendAsync(data, stoppingToken);
-                        Console.WriteLine($"Send: {message}");
+                        _logger.LogInformation("Send: {message}", message);
                         await Task.Delay(1000, stoppingToken);
                     }
 
@@ -58,7 +60,6 @@ namespace BackgroundServiceApp
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                throw;
             }
         }
 
