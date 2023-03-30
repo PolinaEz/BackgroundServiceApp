@@ -18,7 +18,7 @@ namespace BackgroundServiceApp
             const string dateFormat = "dd-MM-yyyy HH:mm:ss zzz";
 
             StringBuilder stringBuilder = new();
-            stringBuilder.Append(Time.ToString(dateFormat)).Append(',')
+            stringBuilder.Append(Time.ToUniversalTime().ToString(dateFormat)).Append(',')
                 .Append(Coordinates.Lon.ToString(CultureInfo.InvariantCulture)).Append(',')
                 .Append(Coordinates.Lat.ToString(CultureInfo.InvariantCulture)).Append(',')
                 .Append(Sat).Append(',')
@@ -112,7 +112,7 @@ namespace BackgroundServiceApp
             {
                 var resultBool = DateTime.TryParseExact(line.AsSpan().Slice(index, nextIndex - index), format,
                     CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AllowWhiteSpaces |
-                                                    System.Globalization.DateTimeStyles.AssumeLocal, out result);
+                                                    System.Globalization.DateTimeStyles.AdjustToUniversal, out result);
 
                 NextIndex(ref index, line);
                 NextIndex(ref nextIndex, line);
