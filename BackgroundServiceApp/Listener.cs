@@ -19,10 +19,11 @@ namespace BackgroundServiceApp
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            try
+            using UdpClient udpClient = new(_listenerOptions.Port);
+
+            while (!stoppingToken.IsCancellationRequested)
             {
-                using UdpClient udpClient = new(_listenerOptions.Port);
-                while (!stoppingToken.IsCancellationRequested)
+                try
                 {
                     var result = await udpClient.ReceiveAsync(stoppingToken);
                     var message = Encoding.UTF8.GetString(result.Buffer);
@@ -39,10 +40,14 @@ namespace BackgroundServiceApp
 
                     _logger.LogInformation("Recv: {point}", point);
                 }
-            }
-            catch (Exception e)
-            {
-                _logger.LogInformation("{e}",e);
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e.ToString());
+                }
             }
         }
     }
