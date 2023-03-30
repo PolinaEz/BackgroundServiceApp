@@ -10,9 +10,9 @@ namespace BackgroundServiceApp
         private readonly ListenerOptions _listenerOptions;
         private readonly ILogger<Listener> _logger;
 
-        public Listener(LbsService _lbsService, IOptions<ListenerOptions> config, ILogger<Listener> logger)
+        public Listener(LbsService lbsService, IOptions<ListenerOptions> config, ILogger<Listener> logger)
         {
-            this._lbsService = _lbsService;
+            this._lbsService = lbsService;
             _listenerOptions = config.Value;
             _logger = logger;
         }
@@ -37,12 +37,12 @@ namespace BackgroundServiceApp
                         point.Coordinates = stationInfo.Coordinates;
                     }
 
-                    _logger.LogInformation("Receive: {point}", point);
+                    _logger.LogInformation("Recv: {point}", point);
                 }
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.LogInformation("{e}",e);
             }
         }
     }

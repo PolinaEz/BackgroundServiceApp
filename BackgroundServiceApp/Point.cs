@@ -15,7 +15,7 @@ namespace BackgroundServiceApp
 
         public override string ToString()
         {
-            const string dateFormat = "dd-MM-yyyy HH:mm:ss";
+            const string dateFormat = "dd-MM-yyyy HH:mm:ss zzz";
 
             StringBuilder stringBuilder = new();
             stringBuilder.Append(Time.ToString(dateFormat)).Append(',')
@@ -38,7 +38,7 @@ namespace BackgroundServiceApp
         public static bool TryParsePoint(string inputData, out Point? resultPoint)
         {
             const char separator = ',';
-            const string dateFormat = "dd-MM-yyyy HH:mm:ss";
+            const string dateFormat = "dd-MM-yyyy HH:mm:ss zzz";
 
             var index = 0;
             var nextIndex = inputData.IndexOf(separator, index + 1);
@@ -112,7 +112,7 @@ namespace BackgroundServiceApp
             {
                 var resultBool = DateTime.TryParseExact(line.AsSpan().Slice(index, nextIndex - index), format,
                     CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AllowWhiteSpaces |
-                                                    System.Globalization.DateTimeStyles.AdjustToUniversal, out result);
+                                                    System.Globalization.DateTimeStyles.AssumeLocal, out result);
 
                 NextIndex(ref index, line);
                 NextIndex(ref nextIndex, line);

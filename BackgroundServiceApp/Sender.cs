@@ -14,10 +14,10 @@ namespace BackgroundServiceApp
         private readonly SenderOptions _senderOptions;
         private List<Point>? _points = new();
 
-        public Sender(LbsService lbsService, IOptions<SenderOptions> config, ILogger<Sender> _logger)
+        public Sender(LbsService lbsService, IOptions<SenderOptions> config, ILogger<Sender> logger)
         {
             this._lbsService = lbsService;
-            this._logger = _logger;
+            this._logger = logger;
             _senderOptions = config.Value;
         }
 
@@ -59,7 +59,7 @@ namespace BackgroundServiceApp
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.LogInformation("{e}", e);
             }
         }
 
