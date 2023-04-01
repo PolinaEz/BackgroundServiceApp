@@ -36,6 +36,7 @@ namespace BackgroundServiceApp
                             continue;
 
                         point.Coordinates = stationInfo.Coordinates;
+                        point.Sat = 0;
                     }
 
                     _logger.LogInformation("Recv: {point}", point);

@@ -46,7 +46,7 @@ namespace BackgroundServiceApp
                         foreach (var t in _points)
                         {
                             t.Time = DateTime.Now;
-                            t.Sat = isInvalid ? 0 : 5;
+                            t.Sat = isInvalid ? 2 : 5;
                             var message = t.ToString();
 
                             var data = Encoding.UTF8.GetBytes(message);
