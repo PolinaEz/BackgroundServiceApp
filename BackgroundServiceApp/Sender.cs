@@ -23,13 +23,15 @@ namespace BackgroundServiceApp
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var pointsGpx = Drivers.Gpx.OpenLayer(@"GraphHopper-Track-2023-03-16-3km.gpx");
-            foreach (var pointGpx in pointsGpx)
-            {
-                if (pointGpx.Geometry.GeometryType != GeometryType.MultiLineString) continue;
-                var lines = (MultiLineString)pointGpx.Geometry;
-                _points = ParseMultiLineString(lines.AsText());
-            }
+            //var pointsGpx = Drivers.Gpx.OpenLayer(@"GraphHopper-Track-2023-03-16-3km.gpx");
+            //foreach (var pointGpx in pointsGpx)
+            //{
+            //    if (pointGpx.Geometry.GeometryType != GeometryType.MultiLineString) continue;
+            //    var lines = (MultiLineString)pointGpx.Geometry;
+            //    _points = ParseMultiLineString(lines.AsText());
+            //}
+
+            _points = LoadPoints();
 
             using var udpClient = new UdpClient(_senderOptions.Host, _senderOptions.Port);
 
@@ -66,6 +68,23 @@ namespace BackgroundServiceApp
                     _logger.LogError(e.ToString());
                 }
             }
+        }
+
+        private List<Point>? LoadPoints()
+        {
+            var points = new List<Point>();
+
+            var pointsGpx = Drivers.Gpx.OpenLayer(@"GraphHopper-Track-2023-03-16-3km.gpx");
+            foreach (var pointGpx in pointsGpx)
+            {
+                if (pointGpx.Geometry.GeometryType != GeometryType.MultiLineString) 
+                    continue;
+
+                var lines = (MultiLineString)pointGpx.Geometry;
+                points = points.Concat(ParseMultiLineString(lines.AsText()) ?? new List<Point>()).ToList();
+            }
+
+            return points;
         }
 
         private List<Point>? ParseMultiLineString(string line)
