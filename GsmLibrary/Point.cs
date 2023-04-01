@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Specialized;
-using System.Globalization;
-using System.Linq;
+﻿using System.Globalization;
 using System.Text;
 
-namespace BackgroundServiceApp
+namespace GsmLibrary
 {
     public class Point
     {

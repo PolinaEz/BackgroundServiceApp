@@ -4,6 +4,8 @@ using Microsoft.Extensions.Options;
 using System.Globalization;
 using System.Net.Sockets;
 using System.Text;
+using GsmLibrary;
+using Point = GsmLibrary.Point;
 
 namespace BackgroundServiceApp
 {

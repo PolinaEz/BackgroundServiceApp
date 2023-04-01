@@ -1,7 +1,6 @@
 ﻿using System.Globalization;
-using System.Text;
 
-namespace BackgroundServiceApp
+namespace GsmLibrary
 {
     public class LbsService
     {

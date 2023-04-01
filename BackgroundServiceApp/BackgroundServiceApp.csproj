@@ -10,4 +10,8 @@
     <PackageReference Include="Aspose.GIS" Version="23.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\GsmLibrary\GsmLibrary.csproj" />
+  </ItemGroup>
+
 </Project>

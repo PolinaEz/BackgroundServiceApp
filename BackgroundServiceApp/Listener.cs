@@ -1,6 +1,7 @@
 ﻿using System.Net.Sockets;
 using System.Text;
 using Microsoft.Extensions.Options;
+using GsmLibrary;
 
 namespace BackgroundServiceApp
 {

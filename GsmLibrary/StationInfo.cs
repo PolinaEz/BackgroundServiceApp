@@ -1,4 +1,4 @@
-﻿namespace BackgroundServiceApp
+﻿namespace GsmLibrary
 {
     public struct StationInfo
     {
