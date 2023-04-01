@@ -30,7 +30,7 @@ namespace BackgroundServiceApp
 
                     if (!Point.TryParsePoint(message, out var point)) continue;
 
-                    if (!point!.IsValid())
+                    if (!point!.IsValid)
                     {
                         if (!_lbsService.TryGetStationInfo(point.Lbs, out var stationInfo))
                             continue;

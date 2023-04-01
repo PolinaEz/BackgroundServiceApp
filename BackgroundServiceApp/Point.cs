@@ -13,12 +13,14 @@ namespace BackgroundServiceApp
         public int Sat { get; set; }
         public Lbs Lbs { get; set; }
 
+        public bool IsValid => this.Sat >= 3;
+
+        private const string DateFormat = "dd-MM-yyyy HH:mm:ss zzz";
+
         public override string ToString()
         {
-            const string dateFormat = "dd-MM-yyyy HH:mm:ss zzz";
-
             StringBuilder stringBuilder = new();
-            stringBuilder.Append(Time.ToUniversalTime().ToString(dateFormat)).Append(',')
+            stringBuilder.Append(Time.ToUniversalTime().ToString(DateFormat)).Append(',')
                 .Append(Coordinates.Lon.ToString(CultureInfo.InvariantCulture)).Append(',')
                 .Append(Coordinates.Lat.ToString(CultureInfo.InvariantCulture)).Append(',')
                 .Append(Sat).Append(',')
@@ -30,21 +32,15 @@ namespace BackgroundServiceApp
             return stringBuilder.ToString();
         }
 
-        public bool IsValid()
-        {
-            return this.Sat >= 3;
-        } 
-
         public static bool TryParsePoint(string inputData, out Point? resultPoint)
         {
             const char separator = ',';
-            const string dateFormat = "dd-MM-yyyy HH:mm:ss zzz";
 
             var index = 0;
             var nextIndex = inputData.IndexOf(separator, index + 1);
 
             if (
-                TryParseDateTime(ref index, ref nextIndex, inputData, dateFormat, out var time) &&
+                TryParseDateTime(ref index, ref nextIndex, inputData, DateFormat, out var time) &&
                 TryParseDouble(ref index, ref nextIndex, inputData, out var lon) &&
                 TryParseDouble(ref index, ref nextIndex, inputData, out var lat) &&
                 TryParseInt(ref index, ref nextIndex, inputData, out var sat) &&
