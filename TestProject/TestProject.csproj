@@ -10,10 +10,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Aspose.GIS" Version="23.2.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="7.0.4" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.3.2" />
     <PackageReference Include="MSTest.TestAdapter" Version="2.2.10" />
     <PackageReference Include="MSTest.TestFramework" Version="2.2.10" />
     <PackageReference Include="coverlet.collector" Version="3.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GsmLibrary\GsmLibrary.csproj" />
+    <ProjectReference Include="..\ListenerPoint\ListenerPoint.csproj" />
+    <ProjectReference Include="..\SenderPoint\SenderPoint.csproj" />
   </ItemGroup>
 
 </Project>

@@ -10,4 +10,8 @@
     <ProjectReference Include="..\GsmLibrary\GsmLibrary.csproj" />
   </ItemGroup>
 
+	<ItemGroup>
+		<InternalsVisibleTo Include="$(AssemblyName).Tests" />
+	</ItemGroup>
+
 </Project>
